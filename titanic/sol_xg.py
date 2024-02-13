@@ -1,9 +1,5 @@
 import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn import preprocessing
-from sklearn.pipeline import Pipeline
+from xgboost import XGBClassifier as xc
 
 def main():
     X_train = pd.read_csv("train.csv")
@@ -17,30 +13,20 @@ def main():
     
     y_train = X_train['Survived']
     X_train.drop(['Survived'], axis=1, inplace=True)
-    
-    X, X_test, y, y_test = train_test_split(X_train, y_train, test_size = 0.25)
-    
-    pipe = Pipeline([('scaler', preprocessing.StandardScaler()), ('model', LogisticRegression())])
-    
-    
-    pipe.fit(X, y)
-    score = pipe.score(X_test, y_test)
-    print(f"score: {score}")
-    
+
+    model = xc()
+
+    model.fit(X_train, y_train)
+
     test = pd.read_csv("test.csv")
     test.Sex = test.Sex.map({'male':0, 'female':1})
     test.Embarked = test.Embarked.map({'S': 0, 'C':1, 'Q':2})
     test.drop(columns = ['Name', 'Ticket', 'Cabin'], inplace = True)
     test.fillna(test.mean(), inplace = True)
     
-    preds = pipe.predict(test)
+    preds = model.predict(test)
     print(f"test:\n{preds}")
     preds_df = pd.DataFrame({'PassengerId': test['PassengerId'], 'Survived':preds})
-    preds_df.to_csv("submission.csv", index=False)
-
-    #print(f"unique: {X_train.isnull().sum()}")
-
-    #X_train.head(10)
-
+    preds_df.to_csv("submission_xc.csv", index=False)
 
 main()
